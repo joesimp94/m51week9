@@ -1,5 +1,7 @@
 const bcrypt = require("bcrypt");
 
+const jwt = require("jsonwebtoken");
+
 const User = require("../user/model");
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
@@ -20,16 +22,16 @@ const comparePass = async (req, res, next) => {
       return;
     }
 
-    const user = await User.findOne({ where: { username: req.body.username } });
-    console.log(user);
-    if (!user) {
+    req.user = await User.findOne({ where: { username: req.body.username } });
+    console.log(req.user);
+    if (!req.user) {
       res.status(401).json({ errormessage: "Invalid Username" });
       return;
     }
 
     const passwordMatch = await bcrypt.compare(
       req.body.password,
-      user.password
+      req.user.password
     );
 
     if (!passwordMatch) {
@@ -42,7 +44,29 @@ const comparePass = async (req, res, next) => {
   }
 };
 
+const verifyToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization;
+
+    const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
+
+    const user = await User.findOne({ where: { id: decodedToken.id } });
+
+    if (!user) {
+      const error = new Error("User is not Authorised");
+      res.status(401).json({ errorMessage: error.message, error: error });
+    }
+
+    req.authCheck = user;
+
+    next();
+  } catch (error) {
+    res.status(501).json({ errorMessage: error.message, error: error });
+  }
+};
+
 module.exports = {
   hashPass,
   comparePass,
+  verifyToken,
 };
