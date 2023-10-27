@@ -1,7 +1,12 @@
 const { Router } = require("express");
 const userRouter = Router();
 
-const { hashPass, comparePass, verifyToken } = require("../middleware/");
+const {
+  hashPass,
+  comparePass,
+  verifyToken,
+  emailValidation,
+} = require("../middleware/");
 
 const {
   getAllUsers,
@@ -15,7 +20,7 @@ userRouter.get("/", getAllUsers);
 
 userRouter.get("/authCheck", verifyToken, loginUser);
 
-userRouter.post("/register", hashPass, registerNewUser);
+userRouter.post("/register", hashPass, emailValidation, registerNewUser);
 
 userRouter.post("/login", comparePass, loginUser);
 
