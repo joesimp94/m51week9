@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
+const validator = require("email-validator");
 
 const User = require("../user/model");
 
@@ -60,8 +61,26 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+const emailValidation = async (req, res, next) => {
+  try {
+    const email = req.body.email;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const validEmail = validator.validate(email);
+    if (!validEmail) {
+      return res
+        .status(400)
+        .json({ message: "Please enter valid email address" });
+    }
+    next();
+  } catch (error) {
+    res.status(501).json({ errorMessage: error.message, error: error });
+  }
+};
+
 module.exports = {
   hashPass,
   comparePass,
   verifyToken,
+  emailValidation,
 };
