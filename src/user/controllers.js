@@ -1,8 +1,8 @@
 const User = require("./model");
-
+require("dotenv").config()
 const jwt = require("jsonwebtoken");
 
-const findAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({});
 
@@ -24,16 +24,30 @@ const registerNewUser = async (req, res) => {
     res.status(500).json({ message: error.message, error });
   }
 };
-
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwiaWF0IjoxNjk4MzMxMjIyfQ
+//   .jZWMIpSA7y_25lrkvEs -
+//   CjFVvdUqg -
+//   zye217YMbmIJw;
 const loginUser = async (req, res) => {
-  console.log(req.user);
+  console.log(process.env.SECRET_KEY);
   try {
-    const token = await jwt.sign({ id: req.user.id }, process.env.SECRET_KEY);
-    res.status(201).json({
-      message: "Success",
-      user: req.user.username,
-      token: token,
-    });
+    if (req.user) {
+      const token = await jwt.sign({ id: req.user.id }, process.env.SECRET_KEY);
+      console.log(token);
+      res.status(201).json({
+        message: "Success",
+        user: {
+          username: req.user.username,
+          email: req.user.email,
+          token,
+        },
+      });
+      return;
+    }
+    if (req.authCheck) {
+      res.status(200).json({ message: "Success", user });
+      return;
+    }
   } catch (error) {
     res.status(500).json({ message: error.message, error: error });
   }
@@ -63,7 +77,7 @@ const updateUser = async (req, res) => {
 };
 
 module.exports = {
-  findAllUsers,
+  getAllUsers,
   registerNewUser,
   loginUser,
   deleteUser,
